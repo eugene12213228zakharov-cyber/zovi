@@ -1,0 +1,268 @@
+@import "tailwindcss";
+
+/* Палитра самого сайта: главная, конструктор, страница ответов. */
+:root {
+  --app-bg: #fbf6f3;
+  --app-card: #ffffff;
+  --app-ink: #24172a;
+  --app-soft: #7c6f80;
+  --app-line: #eee3e8;
+  --app-accent: #ff3d7f;
+  --app-accent-strong: #e62e6d;
+  --app-accent-soft: #ffe4ed;
+  --app-accent-ink: #ffffff;
+}
+
+/* Темы приглашения. Класс вешается на корень экрана получателя и на превью в конструкторе. */
+:root,
+.theme-zefir {
+  --bg: #fff1f5;
+  --bg-2: #f3e6ff;
+  --card: #ffffff;
+  --ink: #2a1630;
+  --ink-soft: #7b6380;
+  --accent: #ff3d7f;
+  --accent-2: #ff8fb3;
+  --accent-ink: #ffffff;
+  --accent-soft: #ffe0eb;
+  --muted: #efe6f2;
+  --muted-ink: #6b5a70;
+  --line: #f6d3e0;
+  --sticker: #ffe3ee;
+  --deco: #ff9dbf;
+  --display-face: var(--font-unbounded);
+}
+
+.theme-vecher {
+  --bg: #1b1024;
+  --bg-2: #33172f;
+  --card: #2a1b35;
+  --ink: #fbefe6;
+  --ink-soft: #cdb6c4;
+  --accent: #ff7a59;
+  --accent-2: #ffb86b;
+  --accent-ink: #1b1024;
+  --accent-soft: #46283d;
+  --muted: #3a2b45;
+  --muted-ink: #d9c5d3;
+  --line: #4c3552;
+  --sticker: #3d2743;
+  --deco: #ffb86b;
+  --display-face: var(--font-playfair);
+}
+
+.theme-myata {
+  --bg: #eafbf4;
+  --bg-2: #fff4e6;
+  --card: #ffffff;
+  --ink: #10302a;
+  --ink-soft: #55736b;
+  --accent: #ff6b57;
+  --accent-2: #ffb199;
+  --accent-ink: #ffffff;
+  --accent-soft: #ffe6df;
+  --muted: #dcf1e8;
+  --muted-ink: #3f5e56;
+  --line: #c9ecdd;
+  --sticker: #d6f5e9;
+  --deco: #62cfa6;
+  --display-face: var(--font-unbounded);
+}
+
+.theme-bumaga {
+  --bg: #f4ede1;
+  --bg-2: #eadcc6;
+  --card: #fffbf3;
+  --ink: #2b2118;
+  --ink-soft: #7a6a58;
+  --accent: #c8413a;
+  --accent-2: #e38b5b;
+  --accent-ink: #fff8ee;
+  --accent-soft: #f3dccd;
+  --muted: #e9dfcf;
+  --muted-ink: #5e5041;
+  --line: #dccbb2;
+  --sticker: #f0e2cc;
+  --deco: #c8413a;
+  --display-face: var(--font-playfair);
+}
+
+@theme inline {
+  --font-body: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+  --font-display: var(--display-face), var(--font-nunito), system-ui, sans-serif;
+  --font-brand: var(--font-unbounded), var(--font-nunito), system-ui, sans-serif;
+
+  --color-app-bg: var(--app-bg);
+  --color-app-card: var(--app-card);
+  --color-app-ink: var(--app-ink);
+  --color-app-soft: var(--app-soft);
+  --color-app-line: var(--app-line);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-strong: var(--app-accent-strong);
+  --color-app-accent-soft: var(--app-accent-soft);
+  --color-app-accent-ink: var(--app-accent-ink);
+
+  --color-page: var(--bg);
+  --color-page-2: var(--bg-2);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-muted: var(--muted);
+  --color-muted-ink: var(--muted-ink);
+  --color-line: var(--line);
+  --color-sticker: var(--sticker);
+  --color-deco: var(--deco);
+}
+
+html,
+body {
+  background: var(--app-bg);
+  color: var(--app-ink);
+}
+
+body {
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ——— Анимации ——— */
+
+@keyframes zovi-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+@keyframes zovi-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes zovi-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px) rotate(-3deg);
+  }
+  40% {
+    transform: translateX(8px) rotate(3deg);
+  }
+  60% {
+    transform: translateX(-6px) rotate(-2deg);
+  }
+  80% {
+    transform: translateX(6px) rotate(2deg);
+  }
+}
+
+@keyframes zovi-rise {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-115vh) scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes zovi-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes zovi-wiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+.animate-float {
+  animation: zovi-float 4.5s ease-in-out infinite;
+}
+.animate-pop {
+  animation: zovi-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.animate-shake {
+  animation: zovi-shake 0.5s ease-in-out;
+}
+.animate-pulse-soft {
+  animation: zovi-pulse 1.8s ease-in-out infinite;
+}
+.animate-wiggle {
+  animation: zovi-wiggle 0.6s ease-in-out 2;
+}
+
+@keyframes zovi-kiss {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2) rotate(-20deg);
+    opacity: 0;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1.25) rotate(8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -95%) scale(1) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+.animate-kiss {
+  animation: zovi-kiss 1s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-pulse-soft,
+  .animate-wiggle {
+    animation: none;
+  }
+  .deco-heart {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
