@@ -62,7 +62,7 @@ export function StepDone({
 
     return (
       <>
-        <div className="rounded-[28px] bg-app-ink p-6 text-white">
+        <div className="rounded-2xl bg-app-ink p-6 text-white">
           <div aria-hidden className="text-4xl">
             🎉
           </div>
@@ -72,7 +72,7 @@ export function StepDone({
           </p>
         </div>
 
-        <section className="flex flex-col gap-3 rounded-[28px] border border-app-line bg-app-card p-5">
+        <section className="flex flex-col gap-3 rounded-2xl border border-app-line bg-app-card p-5">
           <h3 className="text-lg font-extrabold">💌 Ссылка для {config.gender === "female" ? "неё" : "него"}</h3>
           <CopyField value={inviteUrl} />
           <div className="flex flex-wrap gap-2">
@@ -95,7 +95,7 @@ export function StepDone({
           </div>
         </section>
 
-        <section className="flex flex-col gap-3 rounded-[28px] border border-app-line bg-app-card p-5">
+        <section className="flex flex-col gap-3 rounded-2xl border border-app-line bg-app-card p-5">
           <h3 className="text-lg font-extrabold">🔑 Твоя секретная страница</h3>
           <p className="text-sm text-app-soft">
             Там виден ответ и можно поправить приглашение. Никому её не отправляй. Ссылка уже сохранена в «Моих
@@ -111,7 +111,7 @@ export function StepDone({
         </section>
 
         {localOnly && (
-          <div className="rounded-[24px] border-2 border-dashed border-app-accent/50 bg-app-accent-soft/40 p-4 text-sm leading-relaxed">
+          <div className="rounded-2xl border-2 border-dashed border-app-accent/50 bg-app-accent-soft/40 p-4 text-sm leading-relaxed">
             <b>Пока сайт работает только на этом компьютере.</b> С другого телефона ссылка не откроется — сначала
             сайт нужно выложить в интернет.
           </div>
@@ -161,7 +161,7 @@ export function StepDone({
 
   return (
     <>
-      <section className="rounded-[28px] border border-app-line bg-app-card p-2">
+      <section className="rounded-2xl border border-app-line bg-app-card p-2">
         <ul className="divide-y divide-app-line">
           {rows.map((row) => (
             <li key={row.step} className="flex items-center gap-3 px-3 py-3">
@@ -180,7 +180,7 @@ export function StepDone({
       </section>
 
       {problems.length > 0 && (
-        <section className="rounded-[28px] border-2 border-app-accent/40 bg-app-accent-soft/40 p-5">
+        <section className="rounded-2xl border-2 border-app-accent/40 bg-app-accent-soft/40 p-5">
           <h3 className="font-extrabold">Нужно поправить</h3>
           <ul className="mt-3 flex flex-col gap-2">
             {problems.map((problem) => (
@@ -207,7 +207,7 @@ export function StepDone({
         disabled={problems.length > 0 || submitting}
         className="self-start rounded-full bg-app-accent px-8 py-4 text-lg font-extrabold text-app-accent-ink shadow-[0_14px_30px_-14px_var(--app-accent)] transition hover:bg-app-accent-strong active:scale-95 disabled:opacity-40 disabled:shadow-none"
       >
-        {submitting ? "Сохраняю…" : editing ? "Сохранить изменения" : "Создать приглашение 💌"}
+        {submitting ? "Сохраняю…" : editing ? "Сохранить изменения" : "Оформить явку"}
       </button>
     </>
   );

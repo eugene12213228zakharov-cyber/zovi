@@ -1,6 +1,8 @@
 // Проверка того, что приходит в API: конфиг приглашения от конструктора и события от получателя.
 
 import { z } from "zod";
+import { defaultPartyConfig } from "./defaults";
+import { MAX_GUEST_NAME } from "./answer";
 import type { InviteConfig, InviteEventType } from "./types";
 
 const ref = z.string().regex(/^[A-Za-z0-9-]{1,64}$/);
@@ -24,8 +26,19 @@ const mediaRef = z.object({ id: ref, mime: text(100), durationSec: z.number().mi
 
 export const inviteConfigSchema = z.object({
   v: z.literal(1),
+  // Приглашения, созданные до режима компании, лежат в data/ без этих полей — подставляем значения по умолчанию.
+  audience: z.enum(["single", "party"]).default("single"),
   gender: z.enum(["female", "male"]),
-  theme: z.enum(["zefir", "vecher", "myata", "bumaga"]),
+  party: z
+    .object({
+      title: text(300),
+      subtitle: text(300),
+      placeholder: text(40),
+      buttonText: text(40),
+      showGuests: z.boolean(),
+    })
+    .default(defaultPartyConfig),
+  theme: z.enum(["zefir", "vecher", "myata", "bumaga", "bilet"]),
   intro: z.object({
     mode: z.enum(["none", "pin", "scratch", "envelope", "scheduled"]),
     pin: z.object({ question: text(200), code: z.string().regex(/^\d{0,8}$/) }),
@@ -101,6 +114,12 @@ const CLIENT_EVENT_TYPES = [
   "choice_made",
   "finished",
 ] as const satisfies readonly InviteEventType[];
+
+/** Гость представляется: имя и, если он уже был здесь, его прежний ключ. */
+export const joinInputSchema = z.object({
+  name: z.string().max(MAX_GUEST_NAME * 4),
+  key: z.string().max(64).optional(),
+});
 
 export const eventInputSchema = z.object({
   type: z.enum(CLIENT_EVENT_TYPES),

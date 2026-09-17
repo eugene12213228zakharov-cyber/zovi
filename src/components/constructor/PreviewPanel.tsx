@@ -45,7 +45,7 @@ export function PreviewPanel({
         <p className="text-center text-sm font-semibold text-app-soft">Нажимай — так увидит получатель</p>
       )}
       <PhoneFrame heightClass={heightClass}>
-        <ThemedStage theme={config.theme} layout="frame">
+        <ThemedStage theme={config.theme} layout="frame" party={config.audience === "party"}>
           <InviteFlow
             key={runKey}
             config={publicConfig}

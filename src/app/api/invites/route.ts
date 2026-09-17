@@ -1,4 +1,3 @@
-import { emptyAnswer } from "@/lib/invite/answer";
 import { parseInviteConfig } from "@/lib/invite/schema";
 import type { InviteRecord } from "@/lib/invite/types";
 import { validateForSubmit } from "@/lib/invite/validate";
@@ -21,8 +20,8 @@ export async function POST(request: Request) {
     createdAt: now,
     updatedAt: now,
     config,
-    answer: emptyAnswer(),
-    events: [],
+    participants: [],
+    pinFails: [],
   };
   await createInvite(record);
   return Response.json({ id: record.id, authorToken: record.authorToken }, { status: 201 });

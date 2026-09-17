@@ -17,6 +17,10 @@ export function validateForSubmit(
   const blank = (value: string) => value.trim().length === 0;
   const { intro, ask, confirm, when, choice, final } = config;
 
+  if (config.audience === "party" && (blank(config.party.title) || blank(config.party.buttonText))) {
+    problems.push({ step: "who", message: "Заполни вопрос и кнопку на экране знакомства" });
+  }
+
   if (intro.mode === "pin" && !/^\d{4}$/.test(intro.pin.code)) {
     problems.push({ step: "intro", message: "Придумай PIN-код из 4 цифр" });
   }

@@ -1,6 +1,17 @@
 import { addDays, nextSaturdayIso } from "./format";
 import { CHOICE_CATEGORIES } from "./stickers";
-import type { ChoiceCategory, ChoiceOption, Gender, InviteConfig } from "./types";
+import type { ChoiceCategory, ChoiceOption, Gender, InviteConfig, PartyConfig } from "./types";
+
+/** Экран «представься», который видит гость в режиме «зову компанию». */
+export function defaultPartyConfig(): PartyConfig {
+  return {
+    title: "Как тебя зовут?",
+    subtitle: "Чтобы я знал, кто придёт",
+    placeholder: "Имя",
+    buttonText: "Это я",
+    showGuests: true,
+  };
+}
 
 /** Тексты по умолчанию, которые зависят от того, кого зовём. */
 interface GenderTexts {
@@ -94,8 +105,10 @@ export function createDefaultConfig(gender: Gender = "female", now: Date = new D
   const basis: DefaultsBasis = { gender, whenEnabled: true, choiceEnabled: true, category };
   return {
     v: 1,
+    audience: "single",
     gender,
     theme: "zefir",
+    party: defaultPartyConfig(),
     intro: {
       mode: "none",
       pin: { question: t.pinQuestion, code: "" },

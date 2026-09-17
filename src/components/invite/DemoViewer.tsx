@@ -8,7 +8,7 @@ import type { IntroMode, InviteConfig, NoEffect, ThemeId } from "@/lib/invite/ty
 import { firstStage, InviteFlow, type FlowStage } from "./InviteFlow";
 import { ThemedStage } from "./ThemedStage";
 
-const THEMES: ThemeId[] = ["zefir", "vecher", "myata", "bumaga"];
+const THEMES: ThemeId[] = ["zefir", "vecher", "myata", "bumaga", "bilet"];
 const INTROS: IntroMode[] = ["none", "pin", "scratch", "envelope", "scheduled"];
 const NO_EFFECTS: NoEffect[] = ["shrink", "runaway", "kiss", "honest"];
 

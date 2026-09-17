@@ -23,8 +23,11 @@ export default async function AuthorPage({ params }: { params: Promise<{ token: 
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
     config: record.config,
-    answer: record.answer,
-    events: record.events.slice(-100),
+    participants: record.participants.map(({ key: _key, ...participant }) => ({
+      ...participant,
+      events: participant.events.slice(-100),
+    })),
+    pinFails: record.pinFails.slice(-100),
   };
   return <Results token={token} initial={view} />;
 }

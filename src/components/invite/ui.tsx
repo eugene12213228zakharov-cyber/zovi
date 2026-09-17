@@ -25,7 +25,7 @@ export function SoftButton({ className = "", type = "button", ...props }: Button
 export function ScreenCard({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <section
-      className={`relative flex w-full flex-col items-center gap-5 rounded-[36px] bg-card/85 px-6 py-8 text-center shadow-[0_24px_60px_-34px_rgba(40,12,40,0.45)] backdrop-blur-md ${className}`}
+      className={`screen-card relative flex w-full flex-col items-center gap-5 rounded-[36px] bg-card/85 px-6 py-8 text-center shadow-[0_24px_60px_-34px_rgba(40,12,40,0.45)] backdrop-blur-md ${className}`}
     >
       {children}
     </section>

@@ -1,5 +1,6 @@
 import type {
   AuthorView,
+  GuestSummary,
   InviteConfig,
   InviteEvent,
   InviteEventType,
@@ -54,11 +55,34 @@ export function unlockInvite(id: string, pin?: string) {
   return request<{ config: PublicInviteConfig }>(`/api/invites/${id}/unlock`, json("POST", { pin }));
 }
 
-/** Событие получателя уходит «в фоне»: ответ не ждём, ошибки не показываем. */
-export function sendInviteEvent(id: string, type: InviteEventType, data?: InviteEvent["data"]) {
-  void fetch(`/api/invites/${id}/events`, { ...json("POST", { type, data }), keepalive: true }).catch(
-    () => undefined,
+/** Гость называет своё имя и получает ключ, по которому его узнают при возврате. */
+export function joinInvite(id: string, name: string, key?: string) {
+  return request<{ key: string; name: string; guests: GuestSummary[] }>(
+    `/api/invites/${id}/join`,
+    json("POST", { name, key }),
   );
+}
+
+/**
+ * Событие получателя уходит «в фоне»: экран его не ждёт и ошибок не показывает.
+ * В режиме компании сервер возвращает свежий список гостей — им обновляем «уже идут».
+ */
+export async function sendInviteEvent(
+  id: string,
+  type: InviteEventType,
+  data?: InviteEvent["data"],
+  guestKey?: string,
+): Promise<{ guests?: GuestSummary[] } | null> {
+  const headers: Record<string, string> = guestKey ? { "x-guest-key": guestKey } : {};
+  try {
+    const response = await fetch(`/api/invites/${id}/events`, {
+      ...json("POST", { type, data }, headers),
+      keepalive: true,
+    });
+    return (await response.json().catch(() => null)) as { guests?: GuestSummary[] } | null;
+  } catch {
+    return null;
+  }
 }
 
 export function uploadFile(file: Blob, kind: "image" | "audio" | "video", fileName: string) {

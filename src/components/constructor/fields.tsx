@@ -3,7 +3,7 @@
 import { useId, useState, type ReactNode } from "react";
 
 export const inputClass =
-  "w-full rounded-2xl border-2 border-app-line bg-app-bg/60 px-4 py-3 text-[16px] font-semibold text-app-ink outline-none transition placeholder:text-app-soft/70 focus:border-app-accent focus:bg-white";
+  "w-full rounded-lg border border-app-line bg-app-bg/60 px-4 py-3 text-[16px] font-semibold text-app-ink outline-none transition placeholder:text-app-soft/70 focus:border-app-accent focus:bg-white";
 
 export function Section({
   title,
@@ -15,7 +15,7 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[28px] border border-app-line bg-app-card p-5 shadow-[0_18px_40px_-34px_rgba(36,23,42,0.4)]">
+    <section className="card border border-app-line p-5">
       <div className="mb-4 flex items-center gap-3">
         <h2 className="text-lg font-extrabold">{title}</h2>
         {badge && <span className="rounded-full bg-app-bg px-2.5 py-0.5 text-xs font-bold text-app-soft">{badge}</span>}
@@ -266,5 +266,22 @@ export function CopyField({ value }: { value: string }) {
         {copied ? "Скопировано ✓" : "Копировать"}
       </button>
     </div>
+  );
+}
+
+/** Свёрнутый блок «деталей»: по умолчанию закрыт, чтобы быстрый путь оставался коротким. */
+export function Details({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  return (
+    <details className="group rounded-2xl border border-dashed border-app-line bg-app-card/60 p-5 open:bg-app-card">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+        <span className="text-lg font-extrabold">{title}</span>
+        <span className="shrink-0 text-sm font-bold text-app-accent-strong">
+          <span className="group-open:hidden">Развернуть ▾</span>
+          <span className="hidden group-open:inline">Свернуть ▴</span>
+        </span>
+      </summary>
+      {note && <p className="mt-2 text-sm text-app-soft">{note}</p>}
+      <div className="mt-4 flex flex-col gap-4">{children}</div>
+    </details>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/client/api";
-import type { MediaRef } from "@/lib/invite/types";
+import { findSticker } from "@/lib/invite/stickers";
+import type { ImageRef, MediaRef } from "@/lib/invite/types";
 import { PauseIcon, PlayIcon } from "./icons";
 
 export function formatDuration(seconds: number): string {
@@ -177,5 +178,109 @@ export function CirclePlayer({ media, size = 230 }: { media: MediaRef; size?: nu
         </span>
       )}
     </button>
+  );
+}
+
+/** Голосовое как виниловая пластинка: крутится, пока играет, в центре — фото или стикер. */
+export function VinylPlayer({ media, image, size = 236 }: { media: MediaRef; image: ImageRef | null; size?: number }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(media.durationSec);
+  const radius = size / 2 - 3;
+  const circumference = 2 * Math.PI * radius;
+  const labelSize = Math.round(size * 0.38);
+  const sticker = image?.kind === "sticker" ? findSticker(image.id) : undefined;
+  const left = progress > 0 ? duration * (1 - progress) : duration;
+
+  function toggle() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) void audio.play().catch(() => undefined);
+    else audio.pause();
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={playing ? "Пауза" : "Слушать голосовое"}
+        className="relative shrink-0 rounded-full"
+        style={{ width: size, height: size }}
+      >
+        <span
+          className="zovi-vinyl absolute inset-0 block rounded-full"
+          style={{
+            animationPlayState: playing ? "running" : "paused",
+            background:
+              "repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06) 0 1px, rgba(255,255,255,0) 1px 5px), radial-gradient(circle at 50% 50%, #2a2431 0%, #17131d 68%, #0d0b12 100%)",
+            boxShadow: "0 18px 40px -20px rgba(0,0,0,0.65)",
+          }}
+        >
+          <span
+            className="absolute left-1/2 top-1/2 grid -translate-x-1/2 -translate-y-1/2 place-items-center overflow-hidden rounded-full bg-accent-soft"
+            style={{ width: labelSize, height: labelSize }}
+          >
+            {image?.kind === "upload" ? (
+              <img src={mediaUrl(image.id)} alt="" draggable={false} className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-[26px] leading-none">{sticker?.emoji ?? "♪"}</span>
+            )}
+          </span>
+          <span className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0d0b12] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.25)]" />
+        </span>
+
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{ background: "radial-gradient(circle at 32% 24%, rgba(255,255,255,0.22), rgba(255,255,255,0) 46%)" }}
+        />
+
+        <svg className="pointer-events-none absolute inset-0 -rotate-90" viewBox={`0 0 ${size} ${size}`} aria-hidden>
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--accent-soft)" strokeWidth="4" />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - Math.min(1, progress))}
+          />
+        </svg>
+
+        {!playing && (
+          <span className="absolute -bottom-3 left-1/2 grid h-12 w-12 -translate-x-1/2 place-items-center rounded-full bg-white text-[#17131d] shadow-[0_10px_20px_-10px_rgba(0,0,0,0.7)]">
+            <PlayIcon className="ml-0.5 h-5 w-5" />
+          </span>
+        )}
+      </button>
+
+      <span className="text-sm font-bold tabular-nums text-ink-soft">{formatDuration(left)}</span>
+
+      <audio
+        ref={audioRef}
+        src={mediaUrl(media.id)}
+        preload="metadata"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          setProgress(0);
+        }}
+        onLoadedMetadata={(event) => {
+          const value = event.currentTarget.duration;
+          if (Number.isFinite(value) && value > 0) setDuration(value);
+        }}
+        onTimeUpdate={(event) => {
+          const audio = event.currentTarget;
+          const total = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : duration;
+          if (total > 0) setProgress(Math.min(1, audio.currentTime / total));
+        }}
+      />
+    </div>
   );
 }

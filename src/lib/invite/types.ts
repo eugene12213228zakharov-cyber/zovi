@@ -3,7 +3,10 @@
 
 export type Gender = "female" | "male";
 
-export type ThemeId = "zefir" | "vecher" | "myata" | "bumaga";
+/** Кого зовём: одного человека (свидание) или компанию (день рождения, свадьба, посиделки). */
+export type Audience = "single" | "party";
+
+export type ThemeId = "zefir" | "vecher" | "myata" | "bumaga" | "bilet";
 
 /** Картинка на экране: стикер из набора или загруженный файл. */
 export type ImageRef = { kind: "sticker"; id: string } | { kind: "upload"; id: string };
@@ -94,6 +97,16 @@ export interface ChoiceScreen {
   buttonText: string;
 }
 
+/** Настройки режима «зову компанию»: как гость представляется и что видит о других. */
+export interface PartyConfig {
+  title: string;
+  subtitle: string;
+  placeholder: string;
+  buttonText: string;
+  /** Гость видит, кто уже согласился прийти. */
+  showGuests: boolean;
+}
+
 export interface FinalScreen {
   image: ImageRef | null;
   title: string;
@@ -104,8 +117,10 @@ export interface FinalScreen {
 
 export interface InviteConfig {
   v: 1;
+  audience: Audience;
   gender: Gender;
   theme: ThemeId;
+  party: PartyConfig;
   intro: IntroConfig;
   ask: AskScreen;
   confirm: ConfirmScreen;
@@ -119,9 +134,15 @@ export type PublicInviteConfig = Omit<InviteConfig, "intro"> & {
   intro: Omit<IntroConfig, "pin"> & { pin: { question: string; digits: number } };
 };
 
-/** Что видит автор на своей странице ответов. */
-export type AuthorView = Omit<InviteRecord, "authorToken">;
+/** Гость глазами автора: всё, кроме его секретного ключа. */
+export type AuthorParticipant = Omit<Participant, "key">;
 
+/** Что видит автор на своей странице ответов. */
+export type AuthorView = Omit<InviteRecord, "authorToken" | "participants"> & {
+  participants: AuthorParticipant[];
+};
+
+/** pin_failed не хранится у участника — страница автора собирает его из pinFails. */
 export type InviteEventType =
   | "opened"
   | "intro_passed"
@@ -153,12 +174,33 @@ export interface InviteAnswer {
   finishedAt: string | null;
 }
 
+/**
+ * Один отвечающий. В режиме «зову одного» участник ровно один и без имени —
+ * туда же попадают ответы, если ссылку открыли с нескольких устройств.
+ * В режиме «зову компанию» участник заводится на каждого гостя, который представился.
+ */
+export interface Participant {
+  /** Секретный ключ гостя: лежит у него в браузере, по нему узнаём его при возврате. */
+  key: string;
+  name: string;
+  joinedAt: string;
+  answer: InviteAnswer;
+  events: InviteEvent[];
+}
+
 export interface InviteRecord {
   id: string;
   authorToken: string;
   createdAt: string;
   updatedAt: string;
   config: InviteConfig;
-  answer: InviteAnswer;
-  events: InviteEvent[];
+  participants: Participant[];
+  /** Время неудачных попыток PIN: защита у приглашения общая, к гостю не привязана. */
+  pinFails: string[];
+}
+
+/** Короткая сводка по гостю — её видят другие гости, без ключей и подробностей. */
+export interface GuestSummary {
+  name: string;
+  status: "going" | "declined" | "thinking";
 }

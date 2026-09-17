@@ -3,9 +3,38 @@
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import type { InviteRecord } from "@/lib/invite/types";
+import { defaultPartyConfig } from "@/lib/invite/defaults";
+import type { InviteAnswer, InviteEvent, InviteRecord } from "@/lib/invite/types";
 import { DATA_DIR } from "./dataDir";
 import { isSafeId } from "./ids";
+
+/** Как выглядели приглашения до режима компании: один ответ прямо в записи. */
+type StoredRecord = InviteRecord & { answer?: InviteAnswer; events?: InviteEvent[] };
+
+/**
+ * Приводит запись с диска к нынешнему виду: старый единственный ответ становится
+ * первым участником, а в настройках появляются поля режима компании.
+ */
+function normalize(stored: StoredRecord | null): InviteRecord | null {
+  if (!stored) return null;
+  const { answer, events, ...rest } = stored;
+  const config = {
+    ...rest.config,
+    audience: rest.config.audience ?? "single",
+    party: rest.config.party ?? defaultPartyConfig(),
+  };
+  const pinFails = rest.pinFails ?? (events ?? []).filter((e) => e.type === "pin_failed").map((e) => e.at);
+  if (Array.isArray(rest.participants)) return { ...rest, config, pinFails };
+  const own = (events ?? []).filter((e) => e.type !== "pin_failed");
+  return {
+    ...rest,
+    config,
+    pinFails,
+    participants: answer
+      ? [{ key: "solo", name: "", joinedAt: answer.openedAt ?? rest.createdAt, answer, events: own }]
+      : [],
+  };
+}
 
 const INVITES_DIR = path.join(DATA_DIR, "invites");
 const TOKENS_DIR = path.join(DATA_DIR, "author-tokens");
@@ -78,7 +107,7 @@ export async function createInvite(record: InviteRecord): Promise<void> {
 
 export async function getInvite(id: string): Promise<InviteRecord | null> {
   if (!isSafeId(id)) return null;
-  return readJson<InviteRecord>(inviteFile(id));
+  return normalize(await readJson<StoredRecord>(inviteFile(id)));
 }
 
 export async function getInviteByAuthorToken(token: string): Promise<InviteRecord | null> {
@@ -99,7 +128,7 @@ export async function updateInvite(
 ): Promise<InviteRecord | null> {
   if (!isSafeId(id)) return null;
   return withLock(id, async () => {
-    const record = await readJson<InviteRecord>(inviteFile(id));
+    const record = normalize(await readJson<StoredRecord>(inviteFile(id)));
     if (!record) return null;
     const next = mutate(record);
     if (!next) return record;

@@ -1,26 +1,34 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito, Playfair_Display, Unbounded } from "next/font/google";
+import { Caveat, Golos_Text, JetBrains_Mono, Oswald, Playfair_Display, Unbounded } from "next/font/google";
 import "./globals.css";
 
-const nunito = Nunito({ subsets: ["latin", "cyrillic"], variable: "--font-nunito", display: "swap" });
-const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], variable: "--font-unbounded", display: "swap" });
+// Шрифты сайта: заголовки — Playfair, текст — Golos, рукописные акценты и логотип — Caveat.
+const golos = Golos_Text({ subsets: ["latin", "cyrillic"], variable: "--font-golos", display: "swap" });
 const playfair = Playfair_Display({ subsets: ["latin", "cyrillic"], variable: "--font-playfair", display: "swap" });
+const caveat = Caveat({ subsets: ["latin", "cyrillic"], variable: "--font-caveat", display: "swap" });
+// Шрифты тем приглашения.
+const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], variable: "--font-unbounded", display: "swap" });
+const oswald = Oswald({ subsets: ["latin", "cyrillic"], variable: "--font-oswald", display: "swap" });
+const ticketMono = JetBrains_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-ticket-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Зови — приглашение на свидание", template: "%s · Зови" },
-  description: "Собери милое приглашение на свидание и отправь его ссылкой.",
+  title: { default: "Явка — приглашения, на которые приходят", template: "%s · Явка" },
+  description: "Собери интерактивное приглашение на свидание, день рождения или вечеринку и отправь его ссылкой.",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#fbf6f3",
+  themeColor: "#FFF5F7",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" className={`${nunito.variable} ${unbounded.variable} ${playfair.variable}`}>
+    <html
+      lang="ru"
+      className={`${golos.variable} ${playfair.variable} ${caveat.variable} ${unbounded.variable} ${oswald.variable} ${ticketMono.variable}`}
+    >
       <body className="font-body antialiased">{children}</body>
     </html>
   );

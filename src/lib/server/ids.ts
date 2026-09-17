@@ -23,3 +23,5 @@ export const newUploadId = () => randomId(16);
 export function isSafeId(value: string): boolean {
   return /^[A-Za-z0-9]{6,64}$/.test(value);
 }
+
+export const newGuestKey = () => randomId(16);

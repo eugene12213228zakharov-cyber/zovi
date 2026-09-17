@@ -9,6 +9,7 @@ import { createDefaultConfig } from "@/lib/invite/defaults";
 import { TIMEZONES } from "@/lib/invite/timezones";
 import type { InviteConfig } from "@/lib/invite/types";
 import { validateForSubmit, type EditorStepId } from "@/lib/invite/validate";
+import { Details } from "./fields";
 import { clearDraft, loadDraft, rememberInvite, saveDraft } from "./local";
 import { PreviewPanel } from "./PreviewPanel";
 import { STEPS } from "./steps";
@@ -33,7 +34,7 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-const DISABLED_NOTE = "Экран выключен — получатель его не увидит";
+const SKIP_INTRO_NOTE = "Без интриги приглашение откроется сразу на главном вопросе";
 
 export function Constructor({ editToken }: { editToken?: string }) {
   const [config, setConfig] = useState<InviteConfig>(() => createDefaultConfig("female"));
@@ -115,7 +116,7 @@ export function Constructor({ editToken }: { editToken?: string }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const goToStep = (id: EditorStepId) => goTo(STEPS.findIndex((item) => item.id === id));
+  const goToStep = (id: EditorStepId) => goTo(STEPS.findIndex((item) => item.covers.includes(id)));
 
   async function submit() {
     if (submitting || validateForSubmit(config).length > 0) return;
@@ -150,12 +151,8 @@ export function Constructor({ editToken }: { editToken?: string }) {
     if (editToken) window.history.replaceState(null, "", "/create");
   }
 
-  const note =
-    (step.id === "confirm" && !config.confirm.enabled) ||
-    (step.id === "when" && !config.when.enabled) ||
-    (step.id === "choice" && !config.choice.enabled)
-      ? DISABLED_NOTE
-      : null;
+  // Превью подписываем только на шаге отправки: там показан экран «двери», а не сам вопрос.
+  const note = step.id === "send" && config.intro.mode === "none" ? SKIP_INTRO_NOTE : null;
 
   const previewProps = {
     config,
@@ -176,40 +173,39 @@ export function Constructor({ editToken }: { editToken?: string }) {
   const stepProps = { config, update };
   let body: ReactNode = null;
   switch (step.id) {
-    case "who":
+    case "start":
       body = <StepWho {...stepProps} />;
       break;
-    case "intro":
-      body = <StepIntro {...stepProps} />;
-      break;
-    case "ask":
-      body = <StepAsk {...stepProps} />;
-      break;
-    case "confirm":
-      body = <StepConfirm {...stepProps} />;
-      break;
-    case "when":
-      body = <StepWhen {...stepProps} />;
-      break;
-    case "choice":
-      body = <StepChoice {...stepProps} />;
-      break;
-    case "final":
-      body = <StepFinal {...stepProps} />;
-      break;
-    case "done":
+    case "dossier":
+      // Быстрый путь — главный вопрос и дата. Всё остальное спрятано, но никуда не делось.
       body = (
-        <StepDone
-          config={config}
-          problems={problems}
-          onGoTo={goToStep}
-          editing={editing !== null}
-          submitting={submitting}
-          submitError={submitError}
-          result={result}
-          onSubmit={() => void submit()}
-          onStartOver={startOver}
-        />
+        <>
+          <StepAsk {...stepProps} />
+          <StepWhen {...stepProps} />
+          <Details title="Детали по желанию" note="Экран после «Да», выбор вариантов и текст финала. Без них приглашение тоже работает.">
+            <StepConfirm {...stepProps} />
+            <StepChoice {...stepProps} />
+            <StepFinal {...stepProps} />
+          </Details>
+        </>
+      );
+      break;
+    case "send":
+      body = (
+        <>
+          <StepIntro {...stepProps} />
+          <StepDone
+            config={config}
+            problems={problems}
+            onGoTo={goToStep}
+            editing={editing !== null}
+            submitting={submitting}
+            submitError={submitError}
+            result={result}
+            onSubmit={() => void submit()}
+            onStartOver={startOver}
+          />
+        </>
       );
       break;
   }
@@ -302,7 +298,9 @@ export function Constructor({ editToken }: { editToken?: string }) {
             Шаг {stepIndex + 1} из {STEPS.length}
           </div>
           <h1 className="mt-1 font-brand text-[30px] font-bold leading-tight">{step.title}</h1>
-          <p className="mt-2 max-w-2xl text-app-soft">{step.hint}</p>
+          <p className="mt-2 max-w-2xl text-app-soft">
+            {config.audience === "party" && step.partyHint ? step.partyHint : step.hint}
+          </p>
           <div className={`mt-6 flex flex-col gap-4 transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-0"}`}>
             {body}
           </div>
@@ -328,13 +326,13 @@ export function Constructor({ editToken }: { editToken?: string }) {
             >
               👀 Превью
             </button>
-            {step.id !== "done" && (
+            {step.id !== "send" && (
               <button
                 type="button"
                 onClick={() => goTo(stepIndex + 1)}
-                className="ml-auto rounded-full bg-app-accent px-6 py-3 font-extrabold text-app-accent-ink shadow-[0_12px_26px_-14px_var(--app-accent)] transition hover:bg-app-accent-strong active:scale-95"
+                className="ml-auto rounded-full bg-gradient-to-r from-app-accent to-app-violet px-6 py-3 font-extrabold text-white shadow-[0_12px_26px_-14px_var(--app-accent)] transition hover:opacity-95 active:scale-95"
               >
-                {stepIndex === STEPS.length - 2 ? "К ссылке →" : "Дальше →"}
+                {stepIndex === STEPS.length - 2 ? "К отправке →" : "Дальше →"}
               </button>
             )}
           </div>

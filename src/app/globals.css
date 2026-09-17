@@ -2,15 +2,20 @@
 
 /* Палитра самого сайта: главная, конструктор, страница ответов. */
 :root {
-  --app-bg: #fbf6f3;
+  --app-bg: #fff5f7;
+  --app-bg-2: #faf7f5;
   --app-card: #ffffff;
-  --app-ink: #24172a;
-  --app-soft: #7c6f80;
-  --app-line: #eee3e8;
-  --app-accent: #ff3d7f;
-  --app-accent-strong: #e62e6d;
-  --app-accent-soft: #ffe4ed;
+  --app-ink: #1a1a1a;
+  --app-soft: #6b6b6b;
+  --app-line: #f1e3e7;
+  --app-accent: #ff6b9d;
+  --app-accent-strong: #e8548a;
+  --app-accent-soft: #ffe7f0;
   --app-accent-ink: #ffffff;
+  /* Второй акцент для премиум-элементов и градиентов. */
+  --app-violet: #6c63ff;
+  --app-violet-soft: #ece9ff;
+  --ticket-face: var(--font-ticket-mono);
 }
 
 /* Темы приглашения. Класс вешается на корень экрана получателя и на превью в конструкторе. */
@@ -88,11 +93,17 @@
 }
 
 @theme inline {
-  --font-body: var(--font-nunito), ui-rounded, system-ui, sans-serif;
-  --font-display: var(--display-face), var(--font-nunito), system-ui, sans-serif;
-  --font-brand: var(--font-unbounded), var(--font-nunito), system-ui, sans-serif;
+  --font-body: var(--font-golos), ui-rounded, system-ui, sans-serif;
+  --font-display: var(--display-face), var(--font-golos), system-ui, sans-serif;
+  /* Заголовки сайта — Playfair, логотип и рукописные акценты — Caveat. */
+  --font-brand: var(--font-playfair), Georgia, serif;
+  --font-hand: var(--font-caveat), var(--font-golos), cursive;
+  --font-ticket: var(--ticket-face), ui-monospace, monospace;
 
   --color-app-bg: var(--app-bg);
+  --color-app-bg-2: var(--app-bg-2);
+  --color-app-violet: var(--app-violet);
+  --color-app-violet-soft: var(--app-violet-soft);
   --color-app-card: var(--app-card);
   --color-app-ink: var(--app-ink);
   --color-app-soft: var(--app-soft);
@@ -120,7 +131,9 @@
 
 html,
 body {
-  background: var(--app-bg);
+  /* Тёплый кремово-розовый градиент вместо плоского фона. */
+  background: linear-gradient(170deg, var(--app-bg) 0%, var(--app-bg-2) 55%, var(--app-bg) 100%);
+  background-attachment: fixed;
   color: var(--app-ink);
 }
 
@@ -255,14 +268,191 @@ button:not(:disabled),
   animation: zovi-kiss 1s ease-out forwards;
 }
 
+@keyframes zovi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.zovi-vinyl {
+  animation: zovi-spin 3.4s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
   .animate-pulse-soft,
-  .animate-wiggle {
+  .animate-wiggle,
+  .zovi-vinyl {
     animation: none;
   }
   .deco-heart {
     animation: none !important;
     opacity: 0 !important;
+  }
+}
+
+/* Тема «Билет»: бумага, чернила и красная печать. */
+.theme-bilet {
+  --bg: #efe7d8;
+  --bg-2: #e0d2b9;
+  --card: #fbf6ec;
+  --ink: #241c14;
+  --ink-soft: #6f6253;
+  --accent: #c2352b;
+  --accent-2: #d98f3f;
+  --accent-ink: #fff8ee;
+  --accent-soft: #f3e2d6;
+  --muted: #e9dfcb;
+  --muted-ink: #5a4f41;
+  --line: #d8c9ae;
+  --sticker: #f1e5d0;
+  --deco: #c2352b;
+  --display-face: var(--font-oswald);
+}
+
+/* Карточка превращается в билет: перфорация по краям, лёгкая фактура бумаги. */
+.theme-bilet .screen-card {
+  border-radius: 14px;
+  background-color: var(--card);
+  background-image: radial-gradient(rgba(36, 28, 20, 0.05) 1px, transparent 1px);
+  background-size: 5px 5px;
+  backdrop-filter: none;
+  box-shadow: 0 18px 40px -26px rgba(36, 28, 20, 0.55);
+}
+
+.theme-bilet .screen-card::before,
+.theme-bilet .screen-card::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  width: 14px;
+  background-image: radial-gradient(circle at center, var(--bg) 6px, transparent 6.5px);
+  background-size: 14px 22px;
+  background-repeat: repeat-y;
+  pointer-events: none;
+}
+
+.theme-bilet .screen-card::before {
+  left: -7px;
+}
+
+.theme-bilet .screen-card::after {
+  right: -7px;
+}
+
+.theme-bilet .font-display {
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+/* Конверты и карточки на фоне главной: плывут снизу вверх и слегка покачиваются. */
+@keyframes yavka-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--tilt, 0deg));
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(28px, -55vh, 0) rotate(calc(var(--tilt, 0deg) * -1));
+  }
+  88% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate3d(-18px, -125vh, 0) rotate(var(--tilt, 0deg));
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [style*="yavka-drift"] {
+    animation: none !important;
+    opacity: 0.25 !important;
+  }
+}
+
+/* ——— Дизайн-система из ТЗ: градиенты, радиусы 12/16/8, анимации 200–400 мс ——— */
+
+:root {
+  --gradient-pink: linear-gradient(135deg, #ff6b9d 0%, #ff8e53 100%);
+  --gradient-violet: linear-gradient(135deg, #6c63ff 0%, #b06ab3 100%);
+}
+
+/* Основная кнопка: градиент с тенью, скругление 12px, нажатие — scale 0.95. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  background-image: var(--gradient-pink);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 12px 26px -12px rgba(255, 107, 157, 0.75);
+  transition: transform 240ms ease, box-shadow 240ms ease, opacity 240ms ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 16px 32px -12px rgba(255, 107, 157, 0.85);
+}
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+/* Вторичная: прозрачная с цветной рамкой. */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--app-accent);
+  color: var(--app-ink);
+  font-weight: 800;
+  background: transparent;
+  transition: transform 240ms ease, background-color 240ms ease;
+}
+.btn-secondary:hover {
+  background: var(--app-accent-soft);
+}
+.btn-secondary:active {
+  transform: scale(0.95);
+}
+
+/* Карточка: скругление 16px, лёгкая тень, при наведении приподнимается на 4px. */
+.card {
+  border-radius: 16px;
+  background: var(--app-card);
+  box-shadow: 0 6px 18px -10px rgba(26, 26, 26, 0.25);
+  transition: transform 240ms ease, box-shadow 240ms ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px -14px rgba(26, 26, 26, 0.3);
+}
+
+/* Появление блоков: fade-in + slide-up. */
+@keyframes yavka-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-enter {
+  animation: yavka-enter 320ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-enter {
+    animation: none;
+  }
+  .card-hover:hover {
+    transform: none;
   }
 }

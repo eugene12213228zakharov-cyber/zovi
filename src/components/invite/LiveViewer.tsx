@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, sendInviteEvent, unlockInvite } from "@/lib/client/api";
+import { ApiError, joinInvite, sendInviteEvent, unlockInvite } from "@/lib/client/api";
 import type { InviteGate } from "@/lib/invite/public";
-import type { InviteEvent, InviteEventType, PublicInviteConfig } from "@/lib/invite/types";
+import type { GuestSummary, InviteEvent, InviteEventType, PublicInviteConfig } from "@/lib/invite/types";
 import { PinGate, type PinResult } from "./gates/PinGate";
 import { ScheduledGate } from "./gates/ScheduledGate";
+import { loadGuest, saveGuest, type GuestIdentity } from "./guest";
 import { firstStage, InviteFlow, type FlowStage } from "./InviteFlow";
+import { NameScreen } from "./screens/NameScreen";
 import { ThemedStage } from "./ThemedStage";
 
 // Защита от двойного «открыли» в dev-режиме, где React монтирует компонент дважды.
@@ -18,21 +20,77 @@ export function LiveViewer({ inviteId, gate }: { inviteId: string; gate: InviteG
   const [stage, setStage] = useState<FlowStage>(gate.kind === "open" ? firstStage(gate.config) : "ask");
   const unlocked = useRef<PublicInviteConfig | null>(null);
 
+  // Режим «зову компанию»: пока гость не назвался, отвечать не за кого.
+  const [guest, setGuest] = useState<GuestIdentity | null>(null);
+  const [guestLoaded, setGuestLoaded] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [guests, setGuests] = useState<GuestSummary[]>([]);
+
   useEffect(() => {
-    if (openedSent.has(inviteId)) return;
-    openedSent.add(inviteId);
-    sendInviteEvent(inviteId, "opened");
+    setGuest(loadGuest(inviteId));
+    setGuestLoaded(true);
   }, [inviteId]);
 
+  const party = config?.audience === "party";
+  const guestKey = guest?.key;
+
+  // В компании «открыл» засчитываем гостю, поэтому ждём, пока он назовётся.
+  useEffect(() => {
+    if (party && !guestKey) return;
+    if (openedSent.has(inviteId)) return;
+    openedSent.add(inviteId);
+    void sendInviteEvent(inviteId, "opened", undefined, guestKey);
+  }, [inviteId, party, guestKey]);
+
   const onEvent = useCallback(
-    (type: InviteEventType, data?: InviteEvent["data"]) => sendInviteEvent(inviteId, type, data),
-    [inviteId],
+    (type: InviteEventType, data?: InviteEvent["data"]) => {
+      void sendInviteEvent(inviteId, type, data, guestKey).then((result) => {
+        if (result?.guests) setGuests(result.guests);
+      });
+    },
+    [inviteId, guestKey],
+  );
+
+  const submitName = useCallback(
+    async (name: string) => {
+      setJoining(true);
+      setJoinError(null);
+      try {
+        const result = await joinInvite(inviteId, name, guest?.key);
+        const identity = { key: result.key, name: result.name };
+        saveGuest(inviteId, identity);
+        setGuest(identity);
+        setGuests(result.guests);
+      } catch (error) {
+        setJoinError(error instanceof ApiError ? error.message : "Не получилось — попробуй ещё раз");
+      } finally {
+        setJoining(false);
+      }
+    },
+    [inviteId, guest?.key],
   );
 
   if (config) {
+    // Ждём, пока прочитается память браузера, иначе гость на секунду увидит чужой экран.
+    if (config.audience === "party" && !guestLoaded) return null;
+    if (config.audience === "party" && !guest) {
+      return (
+        <ThemedStage theme={config.theme} party>
+          <NameScreen party={config.party} busy={joining} error={joinError} onSubmit={(name) => void submitName(name)} />
+        </ThemedStage>
+      );
+    }
     return (
-      <ThemedStage theme={config.theme}>
-        <InviteFlow config={config} stage={stage} onStageChange={setStage} onEvent={onEvent} />
+      <ThemedStage theme={config.theme} party={config.audience === "party"}>
+        <InviteFlow
+          config={config}
+          stage={stage}
+          onStageChange={setStage}
+          onEvent={onEvent}
+          guestName={guest?.name}
+          guests={guests}
+        />
       </ThemedStage>
     );
   }

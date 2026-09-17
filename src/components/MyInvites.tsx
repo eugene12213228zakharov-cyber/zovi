@@ -16,9 +16,9 @@ export function MyInvites() {
 
   return (
     <section className="mx-auto max-w-6xl px-5 pb-6">
-      <div className="rounded-[28px] border border-app-line bg-app-card p-5">
+      <div className="rounded-2xl border border-app-line bg-app-card p-5">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-lg font-extrabold">Мои приглашения</h2>
+          <h2 className="text-lg font-extrabold">Мои явки</h2>
           <span className="text-xs text-app-soft">хранятся в этом браузере</span>
         </div>
         <ul className="mt-2 divide-y divide-app-line">

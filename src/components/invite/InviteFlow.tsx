@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { InviteEvent, InviteEventType, PublicInviteConfig } from "@/lib/invite/types";
+import type { GuestSummary, InviteEvent, InviteEventType, PublicInviteConfig } from "@/lib/invite/types";
 import { EnvelopeGate } from "./gates/EnvelopeGate";
 import { PinGate, type PinResult } from "./gates/PinGate";
 import { ReadyScreen, ScheduledGate } from "./gates/ScheduledGate";
@@ -45,10 +45,22 @@ interface InviteFlowProps {
   /** Превью: проверка PIN без сервера. */
   verifyPin?: (pin: string) => Promise<PinResult>;
   preview?: boolean;
+  /** Режим «зову компанию»: как зовут этого гостя и кто уже ответил. */
+  guestName?: string;
+  guests?: GuestSummary[];
 }
 
 /** Все экраны приглашения по порядку. Один и тот же код у получателя и в превью конструктора. */
-export function InviteFlow({ config, stage, onStageChange, onEvent, verifyPin, preview = false }: InviteFlowProps) {
+export function InviteFlow({
+  config,
+  stage,
+  onStageChange,
+  onEvent,
+  verifyPin,
+  preview = false,
+  guestName,
+  guests = [],
+}: InviteFlowProps) {
   const [pickedDate, setPickedDate] = useState<string | null>(null);
   const [pickedTime, setPickedTime] = useState<string | null>(null);
   const [choiceIds, setChoiceIds] = useState<string[]>([]);
@@ -161,7 +173,13 @@ export function InviteFlow({ config, stage, onStageChange, onEvent, verifyPin, p
         );
       break;
     case "declined":
-      screen = <DeclinedScreen gender={config.gender} onBack={() => onStageChange("ask")} />;
+      screen = (
+        <DeclinedScreen
+          gender={config.gender}
+          party={config.audience === "party"}
+          onBack={() => onStageChange("ask")}
+        />
+      );
       break;
     case "confirm":
       screen = (
@@ -210,6 +228,9 @@ export function InviteFlow({ config, stage, onStageChange, onEvent, verifyPin, p
       screen = (
         <FinalScreen
           final={config.final}
+          party={config.audience === "party"}
+          guestName={guestName}
+          guests={guests}
           values={{
             date: config.when.enabled ? (date ?? (preview ? config.when.date : null)) : null,
             time: config.when.enabled ? (time ?? (preview ? config.when.time : null)) : null,

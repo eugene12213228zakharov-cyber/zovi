@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AskScreen as AskScreenConfig } from "@/lib/invite/types";
 import { burstFrom } from "../effects";
-import { CirclePlayer, VoiceBubble } from "../media";
+import { CirclePlayer, VinylPlayer } from "../media";
 import { StickerImage } from "../StickerImage";
 import { PrimaryButton, ScreenCard, ScreenTitle, SoftButton } from "../ui";
 
@@ -160,10 +160,12 @@ function AskVisual({ visual }: { visual: AskScreenConfig["visual"] }) {
     return visual.video ? <CirclePlayer media={visual.video} /> : <MissingMedia text="Кружок ещё не записан" />;
   }
   if (visual.type === "voice") {
-    return (
+    return visual.audio ? (
+      <VinylPlayer media={visual.audio} image={visual.image} />
+    ) : (
       <div className="flex w-full flex-col items-center gap-4">
         <StickerImage image={visual.image} size="lg" float />
-        {visual.audio ? <VoiceBubble media={visual.audio} /> : <MissingMedia text="Голосовое ещё не записано" />}
+        <MissingMedia text="Голосовое ещё не записано" />
       </div>
     );
   }

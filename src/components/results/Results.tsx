@@ -6,19 +6,14 @@ import { CopyField } from "@/components/constructor/fields";
 import { rememberInvite } from "@/components/constructor/local";
 import { Logo } from "@/components/Logo";
 import { fetchAuthorView } from "@/lib/client/api";
+import { guestStatus, soloAnswer } from "@/lib/invite/answer";
 import { formatDayMonth, formatWeekdayShort, joinChoices } from "@/lib/invite/format";
 import { CHOICE_CATEGORIES } from "@/lib/invite/stickers";
-import type { AuthorView } from "@/lib/invite/types";
+import type { AuthorView, InviteAnswer } from "@/lib/invite/types";
+import { GuestBoard } from "./GuestBoard";
+import { entriesOf, plural, timelineOf } from "./timeline";
 
 const POLL_MS = 4000;
-
-function plural(count: number, forms: [string, string, string]): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return forms[0];
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return forms[1];
-  return forms[2];
-}
 
 /** «только что», «5 минут назад», «сегодня в 19:05», «14 сентября в 19:05». Только в браузере. */
 function formatAgo(iso: string, now: number | null): string {
@@ -36,8 +31,13 @@ function formatAgo(iso: string, now: number | null): string {
   return `${date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })} в ${clock}`;
 }
 
-function statusOf(view: AuthorView) {
-  const { answer } = view;
+interface Status {
+  emoji: string;
+  title: string;
+  text: string;
+}
+
+function singleStatus(view: AuthorView, answer: InviteAnswer): Status {
   const female = view.config.gender === "female";
   const pick = (f: string, m: string) => (female ? f : m);
 
@@ -60,75 +60,22 @@ function statusOf(view: AuthorView) {
   return { emoji: "⏳", title: "Ещё не открывали", text: "Отправь ссылку — эта страница обновится сама." };
 }
 
-interface Row {
-  key: string;
-  emoji: string;
-  text: string;
-  at: string;
-  noCount?: number;
-}
+function partyStatus(view: AuthorView): Status {
+  const guests = view.participants.filter((participant) => participant.name !== "");
+  const going = guests.filter((guest) => guestStatus(guest.answer) === "going").length;
+  const waiting = guests.filter((guest) => guestStatus(guest.answer) === "thinking").length;
 
-function timelineOf(view: AuthorView): Row[] {
-  const female = view.config.gender === "female";
-  const pick = (f: string, m: string) => (female ? f : m);
-  const rows: Row[] = [];
-
-  view.events.forEach((event, index) => {
-    const key = `${event.at}-${index}`;
-    const data = event.data ?? {};
-    switch (event.type) {
-      case "opened":
-        rows.push({ key, emoji: "💌", text: `${pick("Открыла", "Открыл")} приглашение`, at: event.at });
-        break;
-      case "intro_passed":
-        rows.push({ key, emoji: "🔓", text: `${pick("Прошла", "Прошёл")} вход`, at: event.at });
-        break;
-      case "pin_failed":
-        rows.push({ key, emoji: "🔢", text: "Неверный PIN-код", at: event.at });
-        break;
-      case "no_clicked": {
-        // Серию нажатий «Нет» подряд показываем одной строкой.
-        const last = rows[rows.length - 1];
-        if (last?.noCount) {
-          const count = last.noCount + 1;
-          rows[rows.length - 1] = {
-            ...last,
-            noCount: count,
-            at: event.at,
-            text: `${pick("Нажимала", "Нажимал")} «Нет» — ${count} ${plural(count, ["раз", "раза", "раз"])}`,
-          };
-        } else {
-          rows.push({ key, emoji: "🙈", text: `${pick("Нажала", "Нажал")} «Нет»`, at: event.at, noCount: 1 });
-        }
-        break;
-      }
-      case "declined":
-        rows.push({ key, emoji: "🥲", text: "Честный отказ", at: event.at });
-        break;
-      case "yes":
-        rows.push({ key, emoji: "🎉", text: `${pick("Нажала", "Нажал")} «Да»`, at: event.at });
-        break;
-      case "confirmed":
-        rows.push({ key, emoji: "🙈", text: `${pick("Подтвердила", "Подтвердил")} «да»`, at: event.at });
-        break;
-      case "when_chosen": {
-        const date = typeof data.date === "string" ? data.date : "";
-        const time = typeof data.time === "string" ? data.time : "";
-        rows.push({ key, emoji: "📅", text: `${pick("Выбрала", "Выбрал")} ${formatDayMonth(date)} в ${time}`, at: event.at });
-        break;
-      }
-      case "choice_made": {
-        const choices = Array.isArray(data.choices) ? data.choices.map(String) : [];
-        rows.push({ key, emoji: "✨", text: `${pick("Выбрала", "Выбрал")}: ${joinChoices(choices)}`, at: event.at });
-        break;
-      }
-      case "finished":
-        rows.push({ key, emoji: "💘", text: `${pick("Дошла", "Дошёл")} до финала`, at: event.at });
-        break;
-    }
-  });
-
-  return rows.reverse();
+  if (guests.length === 0) {
+    return { emoji: "⏳", title: "Гостей пока нет", text: "Отправь ссылку в общий чат — список соберётся сам." };
+  }
+  if (going === 0) {
+    return { emoji: "👀", title: "Ссылку открывают", text: `Ответов пока нет, ${waiting} в процессе.` };
+  }
+  return {
+    emoji: "🎉",
+    title: `${going} ${plural(going, ["гость идёт", "гостя идут", "гостей идут"])}`,
+    text: waiting > 0 ? `Ещё ${waiting} ${plural(waiting, ["думает", "думают", "думают"])}.` : "Все ответили.",
+  };
 }
 
 export function Results({ token, initial }: { token: string; initial: AuthorView }) {
@@ -164,14 +111,16 @@ export function Results({ token, initial }: { token: string; initial: AuthorView
     };
   }, [token]);
 
-  const { answer, config } = view;
+  const { config } = view;
+  const party = config.audience === "party";
   const female = config.gender === "female";
-  const status = statusOf(view);
-  const rows = timelineOf(view);
+  const answer = soloAnswer(view);
+  const status = party ? partyStatus(view) : singleStatus(view, answer);
+  const rows = timelineOf(view, entriesOf(view));
   const dateText = answer.date
     ? `${formatWeekdayShort(answer.date)}, ${formatDayMonth(answer.date)}${answer.time ? ` в ${answer.time}` : ""}`
     : null;
-  const hasDetails = Boolean(dateText) || answer.choices.length > 0 || answer.noClicks > 0;
+  const hasDetails = !party && (Boolean(dateText) || answer.choices.length > 0 || answer.noClicks > 0);
 
   return (
     <div className="min-h-dvh">
@@ -183,7 +132,7 @@ export function Results({ token, initial }: { token: string; initial: AuthorView
       </header>
 
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-5 pb-16">
-        <section className="rounded-[32px] bg-app-ink p-6 text-white sm:p-8">
+        <section className="rounded-2xl bg-app-ink p-6 text-white sm:p-8">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/60">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -202,6 +151,8 @@ export function Results({ token, initial }: { token: string; initial: AuthorView
           </div>
         </section>
 
+        {party && <GuestBoard view={view} />}
+
         {hasDetails && (
           <section className="grid gap-3 sm:grid-cols-3">
             {dateText && <Stat emoji="📅" label="Когда" value={dateText} />}
@@ -218,8 +169,8 @@ export function Results({ token, initial }: { token: string; initial: AuthorView
           </section>
         )}
 
-        <section className="flex flex-col gap-3 rounded-[28px] border border-app-line bg-app-card p-5">
-          <h2 className="text-lg font-extrabold">Ссылка для {female ? "неё" : "него"}</h2>
+        <section className="flex flex-col gap-3 rounded-2xl border border-app-line bg-app-card p-5">
+          <h2 className="text-lg font-extrabold">{party ? "Ссылка для гостей" : `Ссылка для ${female ? "неё" : "него"}`}</h2>
           <CopyField value={`${origin}/i/${view.id}`} />
           <div className="flex flex-wrap gap-2">
             <Link
@@ -236,10 +187,14 @@ export function Results({ token, initial }: { token: string; initial: AuthorView
               ✏️ Редактировать
             </Link>
           </div>
-          <p className="text-xs text-app-soft">Твои собственные открытия ссылки тоже попадут в историю.</p>
+          <p className="text-xs text-app-soft">
+            {party
+              ? "Одну и ту же ссылку можно отправить хоть всем сразу — каждый ответит за себя."
+              : "Твои собственные открытия ссылки тоже попадут в историю."}
+          </p>
         </section>
 
-        <section className="rounded-[28px] border border-app-line bg-app-card p-5">
+        <section className="rounded-2xl border border-app-line bg-app-card p-5">
           <h2 className="text-lg font-extrabold">История</h2>
           {rows.length === 0 ? (
             <p className="mt-3 text-app-soft">Пока пусто.</p>
@@ -264,7 +219,7 @@ export function Results({ token, initial }: { token: string; initial: AuthorView
 
 function Stat({ emoji, label, value }: { emoji: string; label: string; value: string }) {
   return (
-    <div className="rounded-[24px] border border-app-line bg-app-card p-4">
+    <div className="rounded-2xl border border-app-line bg-app-card p-4">
       <div aria-hidden className="text-2xl">
         {emoji}
       </div>

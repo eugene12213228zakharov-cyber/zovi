@@ -3,26 +3,38 @@
 //   TELEGRAM_CHAT_ID=твой chat id
 // Без них приложение работает как обычно — ответы видны на странице автора.
 
+import { findParticipant, soloAnswer } from "@/lib/invite/answer";
 import { formatDayMonth, joinChoices } from "@/lib/invite/format";
 import type { InviteEvent, InviteRecord } from "@/lib/invite/types";
 
-export function authorMessageFor(record: InviteRecord, event: InviteEvent): string | null {
+export function authorMessageFor(record: InviteRecord, key: string | null, event: InviteEvent): string | null {
+  const party = record.config.audience === "party";
+  const participant = findParticipant(record, key);
+  const answer = party ? participant?.answer : soloAnswer(record);
+  if (!answer) return null;
+
   const female = record.config.gender === "female";
   const pick = (f: string, m: string) => (female ? f : m);
-  const { answer } = record;
+  // В компании имена разные, поэтому вместо «она сказала» подставляем имя гостя.
+  const who = party ? (participant?.name ?? "Гость") : null;
 
   switch (event.type) {
     case "opened":
-      return answer.opens === 1 ? "💌 Приглашение открыли!" : null;
+      if (answer.opens !== 1) return null;
+      return who ? `💌 ${who} открыл(а) приглашение` : "💌 Приглашение открыли!";
     case "yes":
-      return `🎉 ${pick("Она сказала", "Он сказал")} «да»!`;
+      return who ? `🎉 ${who} идёт!` : `🎉 ${pick("Она сказала", "Он сказал")} «да»!`;
     case "declined":
-      return `😔 ${pick("Она нажала", "Он нажал")} «Нет» по-настоящему`;
+      return who ? `😔 ${who} не придёт` : `😔 ${pick("Она нажала", "Он нажал")} «Нет» по-настоящему`;
     case "finished": {
-      const lines = ["✅ Ответ готов"];
+      const lines = [who ? `✅ Ответ от ${who}` : "✅ Ответ готов"];
       if (answer.date || answer.time) lines.push(`🗓 ${formatDayMonth(answer.date)} ${answer.time ?? ""}`.trim());
       if (answer.choices.length > 0) lines.push(`✨ ${joinChoices(answer.choices)}`);
-      if (answer.noClicks > 0) lines.push(`🙈 «Нет» ${pick("нажимала", "нажимал")}: ${answer.noClicks}`);
+      if (answer.noClicks > 0 && !who) lines.push(`🙈 «Нет» ${pick("нажимала", "нажимал")}: ${answer.noClicks}`);
+      if (party) {
+        const going = record.participants.filter((p) => p.answer.yesAt && !p.answer.declinedAt).length;
+        lines.push(`👥 Идут: ${going}`);
+      }
       return lines.join("\n");
     }
     default:
@@ -30,10 +42,10 @@ export function authorMessageFor(record: InviteRecord, event: InviteEvent): stri
   }
 }
 
-export async function notifyAuthor(record: InviteRecord, event: InviteEvent): Promise<void> {
+export async function notifyAuthor(record: InviteRecord, key: string | null, event: InviteEvent): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  const text = authorMessageFor(record, event);
+  const text = authorMessageFor(record, key, event);
   if (!token || !chatId || !text) return;
 
   try {

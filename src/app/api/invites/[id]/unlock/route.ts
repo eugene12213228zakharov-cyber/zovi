@@ -1,4 +1,3 @@
-import { applyEvent } from "@/lib/invite/answer";
 import { toPublicConfig } from "@/lib/invite/public";
 import { getInvite, updateInvite } from "@/lib/server/storage";
 
@@ -15,7 +14,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (intro.mode === "pin") {
     const since = Date.now() - PIN_WINDOW_MS;
-    const recentFails = record.events.filter((e) => e.type === "pin_failed" && Date.parse(e.at) > since).length;
+    const recentFails = record.pinFails.filter((at) => Date.parse(at) > since).length;
     if (recentFails >= PIN_MAX_FAILS) {
       return Response.json({ error: "too_many_attempts" }, { status: 429 });
     }
@@ -23,7 +22,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const body = (await request.json().catch(() => null)) as { pin?: unknown } | null;
     const pin = typeof body?.pin === "string" ? body.pin : "";
     if (pin !== intro.pin.code) {
-      await updateInvite(id, (current) => applyEvent(current, { type: "pin_failed", at: new Date().toISOString() }));
+      await updateInvite(id, (current) => ({
+        ...current,
+        pinFails: [...current.pinFails, new Date().toISOString()].slice(-100),
+      }));
       return Response.json({ error: "wrong_pin" }, { status: 403 });
     }
   } else if (intro.mode === "scheduled" && Date.parse(intro.scheduled.unlockAt) > Date.now()) {

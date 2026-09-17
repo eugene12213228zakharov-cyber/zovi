@@ -78,7 +78,7 @@ export function StepAsk({ config, update }: StepProps) {
         {visual.type === "voice" && (
           <>
             <MediaRecorderField kind="voice" value={visual.audio} onChange={setAudio} />
-            <Field label="Картинка над голосовым">
+            <Field label="Фото на пластинку" hint="Окажется в центре пластинки — она крутится, пока играет голосовое">
               <ImagePicker value={visual.image} onChange={setImage} />
             </Field>
           </>

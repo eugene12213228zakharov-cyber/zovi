@@ -13,6 +13,7 @@ export const THEMES: ThemeMeta[] = [
   { id: "vecher", name: "Вечер", description: "Тёмный, как ужин при свечах", swatches: ["#1B1024", "#FF7A59", "#33172F"] },
   { id: "myata", name: "Мята", description: "Свежая мята и коралл", swatches: ["#EAFBF4", "#FF6B57", "#FFF4E6"] },
   { id: "bumaga", name: "Письмо", description: "Тёплая бумага и чернила", swatches: ["#F4EDE1", "#C8413A", "#EADCC6"] },
+  { id: "bilet", name: "Билет", description: "Как контрамарка на свидание", swatches: ["#EFE7D8", "#C2352B", "#FBF6EC"] },
 ];
 
 export const themeClass = (id: ThemeId) => `theme-${id}`;
